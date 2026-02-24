@@ -1,0 +1,408 @@
+openapi: 3.1.1
+
+info:
+  title: EazyShop Products API
+  summary: API of Products
+  description: |
+    ## About us
+    API of `products` for ***EazyShop***
+  termsOfService: https://eazyshop.com/terms
+  x-custom-info:
+    comment: Some comments
+    company: EazyShop
+    supportEmail: demo@eazyshop.com
+  contact:
+    name: Miguel Nolasco
+    email: mnolasco@outlook.com
+  version: 1.0.0
+  license:
+    name: EazyShop 2.0 License
+    url: https://www.eazyshop.com/licenses/LICENSE-2.0
+
+servers:
+  - url: https://api.superiun.com
+    description: Production
+  - url: https://devapi.superiun.com
+    description: Development
+  - url: https://testapi.superiun.com
+    description: Testing
+
+security:
+  - BasicAuth: []
+  - BearerAuth: []
+  - ApiKeyAuth: []
+  - Oauth2AuthCode:
+      - read
+      - write
+      - admin
+
+paths:
+  /categories:
+    get:
+      operationId: getCategories
+      summary: List all categories
+      description: Returns a list of all categories
+      security:
+        - ApiKeyAuth: []
+      tags:
+        - Categories
+      parameters:
+        - name: categoryId
+          in: query
+          description: The category ID to filter by
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          example: 101
+      responses:
+        200:
+          description: A list of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+  /categories/{categoryId}:
+    get:
+      operationId: getCategory
+      summary: Get category details
+      description: Returns details of a specific category by ID
+      security: []
+      tags:
+        - Categories
+      parameters:
+        - name: categoryId
+          in: path
+          description: The category ID to filter by
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          examples:
+            mobiles:
+              value: 101
+            laptops:
+              value: 102
+            cameras:
+              value: 103
+            headphones:
+              value: 104
+      responses:
+        200:
+          description: Details of the category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+  /products:
+    get:
+      operationId: getProducts
+      summary: List all products
+      description: |
+        Returns a list of all products
+      tags:
+        - Products
+      parameters:
+        - name: categoryId
+          in: query
+          description: The category ID to filter by
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          example: 101
+      responses:
+        200:
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+  /products/{productId}:
+    get:
+      operationId: getProduct
+      summary: Get product details
+      description: |
+        Returns details of a specific product by ID
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: path
+          description: The product ID to filter by
+          required: true
+          schema:
+            type: integer
+          example: 101
+      responses:
+        200:
+          description: Details of the product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+  /orders:
+    post:
+      operationId: createOrder
+      summary: Create Order
+      description: |
+        Creates a new order with the provided details
+      tags:
+        - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                products:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Product"
+                address:
+                  $ref: "#/components/schemas/Address"
+        required: true
+      responses:
+        201:
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    example: 1001
+                  status:
+                    type: string
+                    example: Created
+          links:
+            GetOrderDetails:
+              $ref: "#/components/links/GetOrderDetails"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      operationId: updateOrder
+      summary: Update Order
+      description: |
+        Updates an existing order with the provided details
+      tags:
+        - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: integer
+                  example: 1001
+                products:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Product"
+                address:
+                  $ref: "#/components/schemas/Address"
+        required: true
+      responses:
+        200:
+          description: Order updated successfully
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Get Order details
+      description: |
+        Returns details of a specific order by ID
+      tags:
+        - Orders
+      parameters:
+        - $ref: "#/components/parameters/orderId"
+      responses:
+        200:
+          description: Details of the order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    example: 1001
+                  products:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        productId:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: Smartphone
+                        price:
+                          type: number
+                          example: 299.99
+                        categoryName:
+                          type: string
+                          example: Electronics
+                        quantity:
+                          type: integer
+                          example: 2
+                  address:
+                    $ref: "#/components/schemas/Address"
+                  status:
+                    type: string
+                    example: Created
+        500:
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      operationId: cancelOrder
+      summary: Cancel Order
+      description: |
+        Cancels an existing order by ID
+      tags:
+        - Orders
+      parameters:
+        - $ref: "#/components/parameters/orderId"
+      responses:
+        200:
+          description: Order cancelled successfully
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  parameters:
+    orderId:
+      name: orderId
+      in: path
+      description: Order ID
+      required: true
+      schema:
+        type: integer
+      example: 1001
+  schemas:
+    Address:
+      type: object
+      properties:
+        addressLine:
+          type: string
+          example: 123 Main St
+        city:
+          type: string
+          example: Anytown
+        state:
+          type: string
+          enum:
+            - California
+            - Texas
+            - Indiana
+            - New York
+        zipCode:
+          type: string
+          example: "12345"
+        isOfficeAddress:
+          type: boolean
+          example: false
+      required:
+        - addressLine
+        - city
+        - state
+        - zipCode
+    Product:
+      type: object
+      properties:
+        productId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Smartphone
+        price:
+          type: number
+          format: float
+          example: 299.99
+        categoryName:
+          type:
+            - string
+            - "null"
+          example: Electronics
+        quantity:
+          type: integer
+          example: 2
+        releaseDate:
+          type: string
+          format: date
+          readOnly: true
+          example: 2024-01-01
+    Category:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Electronics
+    Mobile:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            networkType:
+              type: string
+              enum:
+                - 4G
+                - 5G
+            batteryCapacity:
+              type: integer
+              example: 4000
+  responses:
+    InternalServerError:
+      description: An error ocurred while processing the request. Please contact support if the problem persists.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errorCode:
+                type: integer
+                example: 500
+              message:
+                type: string
+                example: An unexpected error occurred. Please try again later.
+  links:
+    GetOrderDetails:
+      operationId: getOrder
+      parameters:
+        orderId: "$request.body#/orderId"
+      description: |
+        The `orderId` value returned in the response can be used to retrieve the order details in `GET /orders/{orderId}`.
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    Oauth2AuthCode:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.superiun.com/oauth
+          tokenUrl: https://api.superiun.com/token
+          scopes:
+            read: Grants read access
+            write: Grants write access
+            admin: Grants access to admin operations
